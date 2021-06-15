@@ -1,0 +1,39 @@
+#创建存证
+pub fn create_claim(origin,claim:Vec<u8>)->dispatch::DispatchResult{
+	let sender = ensure_signed(origin)?;  
+	ensure!(!Proofs::<T>::contains_key(&claim),Error::<T>::ProofAlreadyExist); 
+	Proofs::<T>::insert(&claim,(sender.clone(),system::Module::<T>::block_number())); 
+	Self::deposit_event(RawEvent::ClaimCreated(sender,claim));
+	Ok(())
+
+}
+
+#撤销存证
+pub fn revoke_claim(origin,claim: Vec<u8>) -> dispatch::DispatchResult{
+	let sender = ensure_signed(origin)?;  
+	ensure!(Proofs::<T>::contains_key(&claim),Error::<T>::ClaimNotExist);
+	let (owner,_block_number) = Proofs::<T>::get(&claim); 
+	ensure!(owner == sender,Error::<T>::NotClaimOwner); 
+		  Proofs::<T>::remove(&claim);
+      hash   Self::deposit_event(RawEvent::ClaimRevoked(sender,claim));Ok(())}
+
+
+ #转移存证
+ pub fn transfer_claim(
+origin,
+ proof: Vec<u8>,
+ receiver:<T as frame_system::Trait>::AccountId
+ )-> dispatch::DispatchResult
+ {
+      
+ let sender = ensure_signed(origin)?;
+               
+ ensure!(Proofs::<T>::contains_key(&proof),Error::<T>::ProofNotExist);
+                
+ let (owner,block_number) = Proofs::<T>::get(&proof);
+               
+ ensure!(owner == sender, Error::<T>::NotClaimOwner);   
+        Proofs::<T>::remove(&proof);
+        Proofs::<T>::insert(&proof,(receiver.clone(),block_number));
+        Self::deposit_event(RawEvent::ClaimTransfer(sender,proof,receiver));Ok(())
+ }
